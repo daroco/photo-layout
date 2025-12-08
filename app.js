@@ -15,6 +15,9 @@ class PhotoLayoutApp {
         // Photos taken from that distance need smaller scale to look proportional
         // Using ~12 pixels per inch to scale frames appropriately for the photo perspective
         this.PIXELS_PER_INCH = 12;
+        
+        // 3:2 aspect ratio for all photo sizes
+        // Short side in inches (corresponds to button labels)
         this.photoSizes = {
             8: 8 * this.PIXELS_PER_INCH,   // 96px
             9: 9 * this.PIXELS_PER_INCH,   // 108px
@@ -23,11 +26,12 @@ class PhotoLayoutApp {
             15: 15 * this.PIXELS_PER_INCH  // 180px
         };
         
-        // Standard long side for photo frames (10 inches)
-        this.LONG_SIDE_INCHES = 10;
+        // 3:2 aspect ratio constant
+        this.ASPECT_RATIO = 3 / 2;
         
         // Legacy scale for backwards compatibility with old saved layouts
         this.LEGACY_PIXELS_PER_INCH = 96;
+        this.LEGACY_LONG_SIDE_INCHES = 10;
 
         this.init();
     }
@@ -142,14 +146,14 @@ class PhotoLayoutApp {
     }
 
     addFrame() {
-        // Default to 8x10 portrait
+        // Default to 8x12 portrait (3:2 aspect ratio)
         const defaultSize = this.photoSizes[8];
         const frame = {
             id: this.frameIdCounter++,
             x: 100,
             y: 100,
             width: defaultSize,
-            height: this.photoSizes[this.LONG_SIDE_INCHES],
+            height: defaultSize * this.ASPECT_RATIO,
             label: `Frame ${this.frames.length + 1}`,
             color: '#000000',
             photoSize: 8,
@@ -179,12 +183,14 @@ class PhotoLayoutApp {
         const sizeInPixels = this.photoSizes[size];
         this.selectedFrame.photoSize = parseInt(size);
         
-        // Apply size based on current orientation
+        // Apply size based on current orientation with 3:2 aspect ratio
         if (this.selectedFrame.orientation === 'portrait') {
+            // Portrait: short side × long side (e.g., 8" × 12")
             this.selectedFrame.width = sizeInPixels;
-            this.selectedFrame.height = this.photoSizes[this.LONG_SIDE_INCHES];
+            this.selectedFrame.height = sizeInPixels * this.ASPECT_RATIO;
         } else {
-            this.selectedFrame.width = this.photoSizes[this.LONG_SIDE_INCHES];
+            // Landscape: long side × short side (e.g., 12" × 8")
+            this.selectedFrame.width = sizeInPixels * this.ASPECT_RATIO;
             this.selectedFrame.height = sizeInPixels;
         }
         
@@ -226,7 +232,7 @@ class PhotoLayoutApp {
             // Reset button states
             document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.orientation-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('sizeDisplay').textContent = 'Current size: 8" × 10" (Portrait)';
+            document.getElementById('sizeDisplay').textContent = 'Current size: 8" × 12" (Portrait)';
             return;
         }
 
@@ -255,9 +261,9 @@ class PhotoLayoutApp {
         document.getElementById('orientationLandscape').classList.toggle('active', 
             this.selectedFrame.orientation === 'landscape');
         
-        // Update size display
+        // Update size display with 3:2 aspect ratio
         const shortSide = this.selectedFrame.photoSize;
-        const longSide = this.LONG_SIDE_INCHES;
+        const longSide = Math.round(shortSide * this.ASPECT_RATIO);
         const orientationText = this.selectedFrame.orientation === 'portrait' ? 'Portrait' : 'Landscape';
         const displaySize = this.selectedFrame.orientation === 'portrait' 
             ? `${shortSide}" × ${longSide}"` 
@@ -278,7 +284,7 @@ class PhotoLayoutApp {
             let sizeText;
             if (frame.photoSize && frame.orientation) {
                 const shortSide = frame.photoSize;
-                const longSide = this.LONG_SIDE_INCHES;
+                const longSide = Math.round(shortSide * this.ASPECT_RATIO);
                 sizeText = frame.orientation === 'portrait' 
                     ? `${shortSide}" × ${longSide}"` 
                     : `${longSide}" × ${shortSide}"`;
