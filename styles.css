@@ -202,6 +202,85 @@ main {
     flex: 1;
 }
 
+/* Size and Orientation Buttons */
+.size-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.size-btn {
+    flex: 1;
+    min-width: 50px;
+    padding: 12px 8px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #4a5568;
+}
+
+.size-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.size-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+.orientation-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.orientation-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.orientation-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.orientation-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+.orientation-icon {
+    font-size: 1.2rem;
+}
+
+.size-display {
+    text-align: center;
+    margin-top: 5px;
+}
+
+.size-display small {
+    color: #718096;
+    font-style: italic;
+}
+
 #framesContainer {
     max-height: 400px;
     overflow-y: auto;

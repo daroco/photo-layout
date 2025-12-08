@@ -10,6 +10,16 @@ class PhotoLayoutApp {
         this.dragStartX = 0;
         this.dragStartY = 0;
         this.frameIdCounter = 1;
+        
+        // Standard photo sizes in inches (at 96 DPI for screen display)
+        // Using 96 pixels per inch as standard screen resolution
+        this.photoSizes = {
+            8: 8 * 96,   // 768px
+            9: 9 * 96,   // 864px
+            10: 10 * 96, // 960px
+            12: 12 * 96, // 1152px
+            15: 15 * 96  // 1440px
+        };
 
         this.init();
     }
@@ -49,12 +59,28 @@ class PhotoLayoutApp {
         document.getElementById('resetBtn').addEventListener('click', () => this.resetLayout());
 
         // Frame properties
-        document.getElementById('updateFrameBtn').addEventListener('click', () => this.updateSelectedFrame());
         document.getElementById('deleteFrameBtn').addEventListener('click', () => this.deleteSelectedFrame());
 
         // Property inputs
-        ['frameLabel', 'frameWidth', 'frameHeight', 'frameColor'].forEach(id => {
-            document.getElementById(id).addEventListener('change', () => this.updateSelectedFrame());
+        document.getElementById('frameLabel').addEventListener('change', () => this.updateSelectedFrame());
+        document.getElementById('frameColor').addEventListener('change', () => this.updateSelectedFrame());
+        
+        // Size buttons
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleSizeChange(btn.dataset.size);
+            });
+        });
+        
+        // Orientation buttons
+        document.getElementById('orientationPortrait').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleOrientationChange('portrait');
+        });
+        document.getElementById('orientationLandscape').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.handleOrientationChange('landscape');
         });
 
         // Modal
@@ -108,14 +134,18 @@ class PhotoLayoutApp {
     }
 
     addFrame() {
+        // Default to 8x10 portrait
+        const defaultSize = this.photoSizes[8];
         const frame = {
             id: this.frameIdCounter++,
             x: 100,
             y: 100,
-            width: 200,
-            height: 150,
+            width: defaultSize,
+            height: this.photoSizes[10],
             label: `Frame ${this.frames.length + 1}`,
-            color: '#000000'
+            color: '#000000',
+            photoSize: 8,
+            orientation: 'portrait'
         };
         
         this.frames.push(frame);
@@ -135,12 +165,45 @@ class PhotoLayoutApp {
         this.render();
     }
 
+    handleSizeChange(size) {
+        if (!this.selectedFrame) return;
+        
+        const sizeInPixels = this.photoSizes[size];
+        this.selectedFrame.photoSize = parseInt(size);
+        
+        // Apply size based on current orientation
+        if (this.selectedFrame.orientation === 'portrait') {
+            this.selectedFrame.width = sizeInPixels;
+            this.selectedFrame.height = this.photoSizes[10]; // Always use 10" for the long side
+        } else {
+            this.selectedFrame.width = this.photoSizes[10];
+            this.selectedFrame.height = sizeInPixels;
+        }
+        
+        this.updatePropertiesPanel();
+        this.updateFramesList();
+        this.render();
+    }
+    
+    handleOrientationChange(orientation) {
+        if (!this.selectedFrame) return;
+        
+        this.selectedFrame.orientation = orientation;
+        
+        // Swap dimensions
+        const temp = this.selectedFrame.width;
+        this.selectedFrame.width = this.selectedFrame.height;
+        this.selectedFrame.height = temp;
+        
+        this.updatePropertiesPanel();
+        this.updateFramesList();
+        this.render();
+    }
+
     updateSelectedFrame() {
         if (!this.selectedFrame) return;
 
         this.selectedFrame.label = document.getElementById('frameLabel').value;
-        this.selectedFrame.width = parseInt(document.getElementById('frameWidth').value);
-        this.selectedFrame.height = parseInt(document.getElementById('frameHeight').value);
         this.selectedFrame.color = document.getElementById('frameColor').value;
 
         this.updateFramesList();
@@ -150,16 +213,48 @@ class PhotoLayoutApp {
     updatePropertiesPanel() {
         if (!this.selectedFrame) {
             document.getElementById('frameLabel').value = '';
-            document.getElementById('frameWidth').value = 200;
-            document.getElementById('frameHeight').value = 150;
             document.getElementById('frameColor').value = '#000000';
+            
+            // Reset button states
+            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.orientation-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('sizeDisplay').textContent = 'Current size: 8" × 10" (Portrait)';
             return;
         }
 
+        // Set frame properties
         document.getElementById('frameLabel').value = this.selectedFrame.label;
-        document.getElementById('frameWidth').value = this.selectedFrame.width;
-        document.getElementById('frameHeight').value = this.selectedFrame.height;
         document.getElementById('frameColor').value = this.selectedFrame.color;
+        
+        // Set default values for old frames without size/orientation
+        if (!this.selectedFrame.photoSize) {
+            this.selectedFrame.photoSize = 8;
+            this.selectedFrame.orientation = 'portrait';
+        }
+        
+        // Update size buttons
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            if (parseInt(btn.dataset.size) === this.selectedFrame.photoSize) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        // Update orientation buttons
+        document.getElementById('orientationPortrait').classList.toggle('active', 
+            this.selectedFrame.orientation === 'portrait');
+        document.getElementById('orientationLandscape').classList.toggle('active', 
+            this.selectedFrame.orientation === 'landscape');
+        
+        // Update size display
+        const shortSide = this.selectedFrame.photoSize;
+        const longSide = 10;
+        const orientationText = this.selectedFrame.orientation === 'portrait' ? 'Portrait' : 'Landscape';
+        const displaySize = this.selectedFrame.orientation === 'portrait' 
+            ? `${shortSide}" × ${longSide}"` 
+            : `${longSide}" × ${shortSide}"`;
+        document.getElementById('sizeDisplay').textContent = `Current size: ${displaySize} (${orientationText})`;
     }
 
     updateFramesList() {
@@ -170,13 +265,27 @@ class PhotoLayoutApp {
             return;
         }
 
-        container.innerHTML = this.frames.map(frame => `
-            <div class="frame-item ${this.selectedFrame?.id === frame.id ? 'selected' : ''}" 
-                 data-frame-id="${frame.id}">
-                <h4>${frame.label}</h4>
-                <p>${frame.width} × ${frame.height} px</p>
-            </div>
-        `).join('');
+        container.innerHTML = this.frames.map(frame => {
+            // Calculate display size
+            let sizeText;
+            if (frame.photoSize && frame.orientation) {
+                const shortSide = frame.photoSize;
+                const longSide = 10;
+                sizeText = frame.orientation === 'portrait' 
+                    ? `${shortSide}" × ${longSide}"` 
+                    : `${longSide}" × ${shortSide}"`;
+            } else {
+                sizeText = `${Math.round(frame.width / 96)}" × ${Math.round(frame.height / 96)}"`;
+            }
+            
+            return `
+                <div class="frame-item ${this.selectedFrame?.id === frame.id ? 'selected' : ''}" 
+                     data-frame-id="${frame.id}">
+                    <h4>${frame.label}</h4>
+                    <p>${sizeText}</p>
+                </div>
+            `;
+        }).join('');
 
         // Add click handlers
         container.querySelectorAll('.frame-item').forEach(item => {
