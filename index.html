@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Layout Planner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Photo Layout Planner</h1>
+            <p class="subtitle">Design your perfect wall gallery</p>
+        </header>
+
+        <main>
+            <!-- Step 1: Upload Wall Image -->
+            <section class="card upload-section" id="uploadSection">
+                <h2>1. Upload Your Wall Photo</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="imageUpload" accept="image/*" capture="environment">
+                    <label for="imageUpload" class="upload-label">
+                        <span class="upload-icon">📷</span>
+                        <span>Click to upload or take a photo</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Step 2: Canvas Area for Layout -->
+            <section class="card canvas-section" id="canvasSection" style="display: none;">
+                <div class="canvas-header">
+                    <h2>2. Design Your Layout</h2>
+                    <div class="canvas-controls">
+                        <button id="addFrameBtn" class="btn btn-primary">+ Add Frame</button>
+                        <button id="saveLayoutBtn" class="btn btn-secondary">💾 Save Layout</button>
+                        <button id="shareBtn" class="btn btn-secondary">🔗 Share</button>
+                        <button id="resetBtn" class="btn btn-danger">🔄 Reset</button>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="layoutCanvas"></canvas>
+                </div>
+            </section>
+
+            <!-- Frame Properties Panel -->
+            <section class="card properties-panel" id="propertiesPanel" style="display: none;">
+                <h3>Frame Properties</h3>
+                <div class="property-group">
+                    <label for="frameLabel">Label:</label>
+                    <input type="text" id="frameLabel" placeholder="e.g., Wedding Photos">
+                </div>
+                <div class="property-group">
+                    <label for="frameWidth">Width (px):</label>
+                    <input type="number" id="frameWidth" min="50" max="800" value="200">
+                </div>
+                <div class="property-group">
+                    <label for="frameHeight">Height (px):</label>
+                    <input type="number" id="frameHeight" min="50" max="800" value="150">
+                </div>
+                <div class="property-group">
+                    <label for="frameColor">Border Color:</label>
+                    <input type="color" id="frameColor" value="#000000">
+                </div>
+                <div class="button-group">
+                    <button id="updateFrameBtn" class="btn btn-primary">Update Frame</button>
+                    <button id="deleteFrameBtn" class="btn btn-danger">Delete Frame</button>
+                </div>
+            </section>
+
+            <!-- Frames List -->
+            <section class="card frames-list" id="framesList" style="display: none;">
+                <h3>Your Frames</h3>
+                <div id="framesContainer">
+                    <p class="empty-state">No frames yet. Click "Add Frame" to get started!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Share Modal -->
+        <div class="modal" id="shareModal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Share Your Layout</h2>
+                <p>Copy this link to share your layout:</p>
+                <div class="share-link-container">
+                    <input type="text" id="shareLink" readonly>
+                    <button id="copyLinkBtn" class="btn btn-primary">Copy</button>
+                </div>
+                <p class="share-info">Anyone with this link can view your layout</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Drag frames to position them • Click to select • Double-click to edit</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
