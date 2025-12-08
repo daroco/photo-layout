@@ -14,17 +14,20 @@ class PhotoLayoutApp {
         // Standard photo sizes in inches scaled for wall photos taken 8-10 feet away
         // Photos taken from that distance need smaller scale to look proportional
         // Using ~12 pixels per inch to scale frames appropriately for the photo perspective
-        const PIXELS_PER_INCH = 12;
+        this.PIXELS_PER_INCH = 12;
         this.photoSizes = {
-            8: 8 * PIXELS_PER_INCH,   // 96px
-            9: 9 * PIXELS_PER_INCH,   // 108px
-            10: 10 * PIXELS_PER_INCH, // 120px
-            12: 12 * PIXELS_PER_INCH, // 144px
-            15: 15 * PIXELS_PER_INCH  // 180px
+            8: 8 * this.PIXELS_PER_INCH,   // 96px
+            9: 9 * this.PIXELS_PER_INCH,   // 108px
+            10: 10 * this.PIXELS_PER_INCH, // 120px
+            12: 12 * this.PIXELS_PER_INCH, // 144px
+            15: 15 * this.PIXELS_PER_INCH  // 180px
         };
         
         // Standard long side for photo frames (10 inches)
         this.LONG_SIDE_INCHES = 10;
+        
+        // Legacy scale for backwards compatibility with old saved layouts
+        this.LEGACY_PIXELS_PER_INCH = 96;
 
         this.init();
     }
@@ -280,7 +283,8 @@ class PhotoLayoutApp {
                     ? `${shortSide}" × ${longSide}"` 
                     : `${longSide}" × ${shortSide}"`;
             } else {
-                sizeText = `${Math.round(frame.width / 96)}" × ${Math.round(frame.height / 96)}"`;
+                // Legacy frames without size info - display in inches using old scale
+                sizeText = `${Math.round(frame.width / this.LEGACY_PIXELS_PER_INCH)}" × ${Math.round(frame.height / this.LEGACY_PIXELS_PER_INCH)}"`;
             }
             
             return `
