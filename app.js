@@ -16,8 +16,7 @@ class PhotoLayoutApp {
         // Using ~12 pixels per inch to scale frames appropriately for the photo perspective
         this.PIXELS_PER_INCH = 12;
         
-        // 3:2 aspect ratio for all photo sizes
-        // Short side in inches (corresponds to button labels)
+        // Photo sizes - short side in inches (corresponds to button labels)
         this.photoSizes = {
             8: 8 * this.PIXELS_PER_INCH,   // 96px
             9: 9 * this.PIXELS_PER_INCH,   // 108px
@@ -26,12 +25,12 @@ class PhotoLayoutApp {
             15: 15 * this.PIXELS_PER_INCH  // 180px
         };
         
-        // 3:2 aspect ratio constant
+        // 3:2 aspect ratio constant for all photo sizes
+        // Portrait: short side × (short side × 1.5), Landscape: (short side × 1.5) × short side
         this.ASPECT_RATIO = 3 / 2;
         
         // Legacy scale for backwards compatibility with old saved layouts
         this.LEGACY_PIXELS_PER_INCH = 96;
-        this.LEGACY_LONG_SIDE_INCHES = 10;
 
         this.init();
     }
