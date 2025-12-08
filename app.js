@@ -11,15 +11,20 @@ class PhotoLayoutApp {
         this.dragStartY = 0;
         this.frameIdCounter = 1;
         
-        // Standard photo sizes in inches (at 96 DPI for screen display)
-        // Using 96 pixels per inch as standard screen resolution
+        // Standard photo sizes in inches scaled for wall photos taken 8-10 feet away
+        // Photos taken from that distance need smaller scale to look proportional
+        // Using ~12 pixels per inch to scale frames appropriately for the photo perspective
+        const PIXELS_PER_INCH = 12;
         this.photoSizes = {
-            8: 8 * 96,   // 768px
-            9: 9 * 96,   // 864px
-            10: 10 * 96, // 960px
-            12: 12 * 96, // 1152px
-            15: 15 * 96  // 1440px
+            8: 8 * PIXELS_PER_INCH,   // 96px
+            9: 9 * PIXELS_PER_INCH,   // 108px
+            10: 10 * PIXELS_PER_INCH, // 120px
+            12: 12 * PIXELS_PER_INCH, // 144px
+            15: 15 * PIXELS_PER_INCH  // 180px
         };
+        
+        // Standard long side for photo frames (10 inches)
+        this.LONG_SIDE_INCHES = 10;
 
         this.init();
     }
@@ -141,7 +146,7 @@ class PhotoLayoutApp {
             x: 100,
             y: 100,
             width: defaultSize,
-            height: this.photoSizes[10],
+            height: this.photoSizes[this.LONG_SIDE_INCHES],
             label: `Frame ${this.frames.length + 1}`,
             color: '#000000',
             photoSize: 8,
@@ -174,9 +179,9 @@ class PhotoLayoutApp {
         // Apply size based on current orientation
         if (this.selectedFrame.orientation === 'portrait') {
             this.selectedFrame.width = sizeInPixels;
-            this.selectedFrame.height = this.photoSizes[10]; // Always use 10" for the long side
+            this.selectedFrame.height = this.photoSizes[this.LONG_SIDE_INCHES];
         } else {
-            this.selectedFrame.width = this.photoSizes[10];
+            this.selectedFrame.width = this.photoSizes[this.LONG_SIDE_INCHES];
             this.selectedFrame.height = sizeInPixels;
         }
         
@@ -249,7 +254,7 @@ class PhotoLayoutApp {
         
         // Update size display
         const shortSide = this.selectedFrame.photoSize;
-        const longSide = 10;
+        const longSide = this.LONG_SIDE_INCHES;
         const orientationText = this.selectedFrame.orientation === 'portrait' ? 'Portrait' : 'Landscape';
         const displaySize = this.selectedFrame.orientation === 'portrait' 
             ? `${shortSide}" × ${longSide}"` 
@@ -270,7 +275,7 @@ class PhotoLayoutApp {
             let sizeText;
             if (frame.photoSize && frame.orientation) {
                 const shortSide = frame.photoSize;
-                const longSide = 10;
+                const longSide = this.LONG_SIDE_INCHES;
                 sizeText = frame.orientation === 'portrait' 
                     ? `${shortSide}" × ${longSide}"` 
                     : `${longSide}" × ${shortSide}"`;
