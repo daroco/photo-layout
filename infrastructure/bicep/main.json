@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "1598624275801555902"
+      "templateHash": "9683634422579722672"
     }
   },
   "parameters": {
@@ -86,7 +86,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "5388923563311338287"
+              "templateHash": "1677830450006023987"
             }
           },
           "parameters": {
@@ -189,11 +189,11 @@
             },
             "staticWebsiteUrl": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').primaryEndpoints.web]"
+              "value": "[format('https://{0}.z13.web.{1}/', parameters('storageAccountName'), environment().suffixes.storage)]"
             },
             "staticWebsiteHostName": {
               "type": "string",
-              "value": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-01-01').primaryEndpoints.web, 'https://', ''), '/', '')]"
+              "value": "[format('{0}.z13.web.{1}', parameters('storageAccountName'), environment().suffixes.storage)]"
             },
             "primaryEndpoint": {
               "type": "string",

@@ -90,14 +90,34 @@ az storage blob service-properties update `
 # Upload website files
 Write-Host "Uploading website files..." -ForegroundColor Yellow
 Push-Location ../..
+
+# Upload HTML files
+Write-Host "Uploading HTML files..." -ForegroundColor Yellow
 az storage blob upload-batch `
     --account-name $StorageAccount `
     --destination '$web' `
     --source . `
     --pattern "*.html" `
+    --overwrite true
+
+# Upload CSS files
+Write-Host "Uploading CSS files..." -ForegroundColor Yellow
+az storage blob upload-batch `
+    --account-name $StorageAccount `
+    --destination '$web' `
+    --source . `
     --pattern "*.css" `
+    --overwrite true
+
+# Upload JavaScript files
+Write-Host "Uploading JavaScript files..." -ForegroundColor Yellow
+az storage blob upload-batch `
+    --account-name $StorageAccount `
+    --destination '$web' `
+    --source . `
     --pattern "*.js" `
     --overwrite true
+
 Pop-Location
 
 Write-Host "================================================" -ForegroundColor Green
@@ -105,8 +125,7 @@ Write-Host "Deployment completed successfully!" -ForegroundColor Green
 Write-Host "================================================" -ForegroundColor Green
 Write-Host "Storage Account: $StorageAccount"
 Write-Host "Website URL: $StaticWebsiteUrl"
-Write-Host "Primary Endpoint: $PrimaryEndpoint"
 Write-Host "================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Access your application at: $PrimaryEndpoint" -ForegroundColor Cyan
+Write-Host "Access your application at: $StaticWebsiteUrl" -ForegroundColor Cyan
 Write-Host ""

@@ -93,12 +93,31 @@ az storage blob service-properties update \
 # Upload website files
 echo "Uploading website files..."
 cd ../..
+
+# Upload HTML files
+echo "Uploading HTML files..."
 az storage blob upload-batch \
     --account-name "$STORAGE_ACCOUNT" \
     --destination '$web' \
     --source . \
     --pattern "*.html" \
+    --overwrite true
+
+# Upload CSS files
+echo "Uploading CSS files..."
+az storage blob upload-batch \
+    --account-name "$STORAGE_ACCOUNT" \
+    --destination '$web' \
+    --source . \
     --pattern "*.css" \
+    --overwrite true
+
+# Upload JavaScript files
+echo "Uploading JavaScript files..."
+az storage blob upload-batch \
+    --account-name "$STORAGE_ACCOUNT" \
+    --destination '$web' \
+    --source . \
     --pattern "*.js" \
     --overwrite true
 
@@ -107,8 +126,7 @@ echo "Deployment completed successfully!"
 echo "================================================"
 echo "Storage Account: $STORAGE_ACCOUNT"
 echo "Website URL: $STATIC_WEBSITE_URL"
-echo "Primary Endpoint: $PRIMARY_ENDPOINT"
 echo "================================================"
 echo ""
-echo "Access your application at: $PRIMARY_ENDPOINT"
+echo "Access your application at: $STATIC_WEBSITE_URL"
 echo ""

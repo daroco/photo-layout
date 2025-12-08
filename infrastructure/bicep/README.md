@@ -258,6 +258,46 @@ Storage account names must be globally unique. Either:
 1. Choose a different name
 2. Use the auto-generated name (default behavior)
 
+### 404 Error: "The requested content does not exist"
+
+This error occurs when static website hosting is not enabled on the storage account.
+
+**Solution:**
+
+```bash
+# Enable static website hosting manually
+az storage blob service-properties update \
+  --account-name $STORAGE_ACCOUNT \
+  --static-website \
+  --404-document "index.html" \
+  --index-document "index.html"
+
+# Re-upload the files
+cd /path/to/photo-layout
+az storage blob upload-batch \
+  --account-name $STORAGE_ACCOUNT \
+  --destination '$web' \
+  --source . \
+  --pattern "*.html" \
+  --overwrite true
+
+az storage blob upload-batch \
+  --account-name $STORAGE_ACCOUNT \
+  --destination '$web' \
+  --source . \
+  --pattern "*.css" \
+  --overwrite true
+
+az storage blob upload-batch \
+  --account-name $STORAGE_ACCOUNT \
+  --destination '$web' \
+  --source . \
+  --pattern "*.js" \
+  --overwrite true
+```
+
+**Note:** The deployment scripts automatically enable static website hosting and upload files. If you deployed manually, you may need to run these commands.
+
 ### Files Not Showing Up
 
 ```bash
