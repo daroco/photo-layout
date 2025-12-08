@@ -70,18 +70,6 @@ STORAGE_ACCOUNT=$(az deployment group show \
     --query properties.outputs.storageAccountName.value \
     --output tsv)
 
-STATIC_WEBSITE_URL=$(az deployment group show \
-    --name "$DEPLOYMENT_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --query properties.outputs.staticWebsiteUrl.value \
-    --output tsv)
-
-PRIMARY_ENDPOINT=$(az deployment group show \
-    --name "$DEPLOYMENT_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --query properties.outputs.primaryEndpoint.value \
-    --output tsv)
-
 # Enable static website hosting
 echo "Enabling static website hosting..."
 az storage blob service-properties update \
@@ -89,6 +77,14 @@ az storage blob service-properties update \
     --static-website \
     --404-document "index.html" \
     --index-document "index.html"
+
+# Get the actual static website URL after enabling it
+echo "Retrieving static website URL..."
+STATIC_WEBSITE_URL=$(az storage account show \
+    --name "$STORAGE_ACCOUNT" \
+    --resource-group "$RESOURCE_GROUP" \
+    --query "primaryEndpoints.web" \
+    --output tsv)
 
 # Upload website files
 echo "Uploading website files..."

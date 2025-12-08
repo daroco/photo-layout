@@ -1,8 +1,8 @@
 // Staging environment parameters
-using '../main.bicep'
+using '../main-staticwebapp.bicep'
 
 param environment = 'staging'
-param enableCdn = true
+param sku = 'Standard'
 param tags = {
   Application: 'PhotoLayoutPlanner'
   ManagedBy: 'Bicep'

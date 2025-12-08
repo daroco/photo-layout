@@ -67,18 +67,6 @@ $StorageAccount = az deployment group show `
     --query properties.outputs.storageAccountName.value `
     --output tsv
 
-$StaticWebsiteUrl = az deployment group show `
-    --name $DeploymentName `
-    --resource-group $ResourceGroup `
-    --query properties.outputs.staticWebsiteUrl.value `
-    --output tsv
-
-$PrimaryEndpoint = az deployment group show `
-    --name $DeploymentName `
-    --resource-group $ResourceGroup `
-    --query properties.outputs.primaryEndpoint.value `
-    --output tsv
-
 # Enable static website hosting
 Write-Host "Enabling static website hosting..." -ForegroundColor Yellow
 az storage blob service-properties update `
@@ -86,6 +74,14 @@ az storage blob service-properties update `
     --static-website `
     --404-document "index.html" `
     --index-document "index.html"
+
+# Get the actual static website URL after enabling it
+Write-Host "Retrieving static website URL..." -ForegroundColor Yellow
+$StaticWebsiteUrl = az storage account show `
+    --name $StorageAccount `
+    --resource-group $ResourceGroup `
+    --query "primaryEndpoints.web" `
+    --output tsv
 
 # Upload website files
 Write-Host "Uploading website files..." -ForegroundColor Yellow

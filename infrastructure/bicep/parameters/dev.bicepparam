@@ -1,8 +1,8 @@
 // Development environment parameters
-using '../main.bicep'
+using '../main-staticwebapp.bicep'
 
 param environment = 'dev'
-param enableCdn = false
+param sku = 'Free'
 param tags = {
   Application: 'PhotoLayoutPlanner'
   ManagedBy: 'Bicep'

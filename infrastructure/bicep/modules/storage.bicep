@@ -73,8 +73,6 @@ resource webContainer 'Microsoft.Storage/storageAccounts/blobServices/containers
 // Outputs
 output storageAccountName string = storageAccount.name
 output storageAccountId string = storageAccount.id
-// Static website URL will be available after enabling static website hosting via CLI
-// Format: https://<account-name>.<zone>.web.core.windows.net/
-output staticWebsiteUrl string = 'https://${storageAccount.name}.z13.web.${az.environment().suffixes.storage}/'
-output staticWebsiteHostName string = '${storageAccount.name}.z13.web.${az.environment().suffixes.storage}'
+// Note: Static website URL is not available until static website hosting is enabled via CLI
+// The deployment scripts will retrieve the actual URL after enabling the feature
 output primaryEndpoint string = storageAccount.properties.primaryEndpoints.blob
