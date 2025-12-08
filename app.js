@@ -426,14 +426,27 @@ class PhotoLayoutApp {
         document.getElementById('shareModal').style.display = 'none';
     }
 
-    copyShareLink() {
+    async copyShareLink() {
         const linkInput = document.getElementById('shareLink');
-        linkInput.select();
-        document.execCommand('copy');
-        
         const btn = document.getElementById('copyLinkBtn');
         const originalText = btn.textContent;
-        btn.textContent = 'Copied! ✓';
+        
+        try {
+            // Use modern Clipboard API
+            await navigator.clipboard.writeText(linkInput.value);
+            btn.textContent = 'Copied! ✓';
+        } catch (err) {
+            // Fallback for older browsers
+            linkInput.select();
+            try {
+                document.execCommand('copy');
+                btn.textContent = 'Copied! ✓';
+            } catch (fallbackErr) {
+                btn.textContent = 'Failed to copy';
+                console.error('Copy failed:', fallbackErr);
+            }
+        }
+        
         setTimeout(() => {
             btn.textContent = originalText;
         }, 2000);
