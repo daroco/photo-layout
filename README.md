@@ -60,14 +60,38 @@ Works in all modern browsers that support:
 - LocalStorage
 - ES6+ JavaScript
 
+## Deployment to Azure
+
+This application can be easily deployed to Azure as a static website. See the [infrastructure/bicep/README.md](infrastructure/bicep/README.md) for detailed deployment instructions.
+
+### Quick Azure Deployment
+
+```bash
+cd infrastructure/bicep
+./deploy.sh dev photo-layout-rg eastus
+```
+
+Or use the GitHub Actions workflow for automated CI/CD deployment.
+
 ## File Structure
 
 ```
 photo-layout/
-├── index.html      # Main HTML structure
-├── styles.css      # Styling and responsive design
-├── app.js          # Application logic
-└── README.md       # This file
+├── index.html                  # Main HTML structure
+├── styles.css                  # Styling and responsive design
+├── app.js                      # Application logic
+├── infrastructure/
+│   └── bicep/                 # Azure deployment templates
+│       ├── main.bicep         # Main infrastructure template
+│       ├── modules/           # Bicep modules
+│       ├── parameters/        # Environment parameters
+│       ├── deploy.sh          # Deployment script (Bash)
+│       ├── deploy.ps1         # Deployment script (PowerShell)
+│       └── README.md          # Deployment documentation
+├── .github/
+│   └── workflows/
+│       └── azure-deploy.yml   # CI/CD pipeline
+└── README.md                  # This file
 ```
 
 ## Tips

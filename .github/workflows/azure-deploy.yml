@@ -1,0 +1,313 @@
+name: Deploy to Azure
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+env:
+  AZURE_RESOURCE_GROUP_DEV: photo-layout-dev-rg
+  AZURE_RESOURCE_GROUP_STAGING: photo-layout-staging-rg
+  AZURE_RESOURCE_GROUP_PROD: photo-layout-prod-rg
+  AZURE_LOCATION: eastus
+
+jobs:
+  validate:
+    name: Validate Bicep Templates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Validate Bicep
+        run: |
+          cd infrastructure/bicep
+          az bicep build --file main.bicep
+          echo "✓ Bicep template is valid"
+
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    environment:
+      name: development
+      url: ${{ steps.deploy.outputs.website_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RESOURCE_GROUP_DEV }} \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          cd infrastructure/bicep
+          
+          DEPLOYMENT_NAME="photolayout-$(date +%Y%m%d-%H%M%S)"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_DEV }} \
+            --template-file main.bicep \
+            --parameters parameters/dev.bicepparam
+          
+          # Get outputs
+          STORAGE_ACCOUNT=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_DEV }} \
+            --query properties.outputs.storageAccountName.value \
+            --output tsv)
+          
+          WEBSITE_URL=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_DEV }} \
+            --query properties.outputs.staticWebsiteUrl.value \
+            --output tsv)
+          
+          echo "storage_account=$STORAGE_ACCOUNT" >> $GITHUB_OUTPUT
+          echo "website_url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+
+      - name: Enable Static Website
+        run: |
+          az storage blob service-properties update \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --static-website \
+            --404-document "index.html" \
+            --index-document "index.html"
+
+      - name: Upload Website Files
+        run: |
+          az storage blob upload-batch \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --destination '$web' \
+            --source . \
+            --pattern "*.html" \
+            --pattern "*.css" \
+            --pattern "*.js" \
+            --overwrite true
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: Development" >> $GITHUB_STEP_SUMMARY
+          echo "Storage Account: ${{ steps.deploy.outputs.storage_account }}" >> $GITHUB_STEP_SUMMARY
+          echo "Website URL: ${{ steps.deploy.outputs.website_url }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.website_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RESOURCE_GROUP_STAGING }} \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          cd infrastructure/bicep
+          
+          DEPLOYMENT_NAME="photolayout-$(date +%Y%m%d-%H%M%S)"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_STAGING }} \
+            --template-file main.bicep \
+            --parameters parameters/staging.bicepparam
+          
+          # Get outputs
+          STORAGE_ACCOUNT=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_STAGING }} \
+            --query properties.outputs.storageAccountName.value \
+            --output tsv)
+          
+          WEBSITE_URL=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_STAGING }} \
+            --query properties.outputs.primaryEndpoint.value \
+            --output tsv)
+          
+          echo "storage_account=$STORAGE_ACCOUNT" >> $GITHUB_OUTPUT
+          echo "website_url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+
+      - name: Enable Static Website
+        run: |
+          az storage blob service-properties update \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --static-website \
+            --404-document "index.html" \
+            --index-document "index.html"
+
+      - name: Upload Website Files
+        run: |
+          az storage blob upload-batch \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --destination '$web' \
+            --source . \
+            --pattern "*.html" \
+            --pattern "*.css" \
+            --pattern "*.js" \
+            --overwrite true
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: Staging" >> $GITHUB_STEP_SUMMARY
+          echo "Storage Account: ${{ steps.deploy.outputs.storage_account }}" >> $GITHUB_STEP_SUMMARY
+          echo "Website URL: ${{ steps.deploy.outputs.website_url }}" >> $GITHUB_STEP_SUMMARY
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-staging]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.website_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --location ${{ env.AZURE_LOCATION }}
+
+      - name: Deploy Infrastructure
+        id: deploy
+        run: |
+          cd infrastructure/bicep
+          
+          DEPLOYMENT_NAME="photolayout-$(date +%Y%m%d-%H%M%S)"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --template-file main.bicep \
+            --parameters parameters/prod.bicepparam
+          
+          # Get outputs
+          STORAGE_ACCOUNT=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --query properties.outputs.storageAccountName.value \
+            --output tsv)
+          
+          WEBSITE_URL=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --query properties.outputs.primaryEndpoint.value \
+            --output tsv)
+          
+          CDN_PROFILE=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --query properties.outputs.cdnEndpointUrl.value \
+            --output tsv)
+          
+          echo "storage_account=$STORAGE_ACCOUNT" >> $GITHUB_OUTPUT
+          echo "website_url=$WEBSITE_URL" >> $GITHUB_OUTPUT
+          echo "cdn_url=$CDN_PROFILE" >> $GITHUB_OUTPUT
+
+      - name: Enable Static Website
+        run: |
+          az storage blob service-properties update \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --static-website \
+            --404-document "index.html" \
+            --index-document "index.html"
+
+      - name: Upload Website Files
+        run: |
+          az storage blob upload-batch \
+            --account-name ${{ steps.deploy.outputs.storage_account }} \
+            --destination '$web' \
+            --source . \
+            --pattern "*.html" \
+            --pattern "*.css" \
+            --pattern "*.js" \
+            --overwrite true
+
+      - name: Purge CDN Cache
+        run: |
+          # Extract CDN profile and endpoint names from resource group
+          CDN_PROFILES=$(az cdn profile list \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+            --query "[].name" \
+            --output tsv)
+          
+          for PROFILE in $CDN_PROFILES; do
+            CDN_ENDPOINTS=$(az cdn endpoint list \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+              --profile-name $PROFILE \
+              --query "[].name" \
+              --output tsv)
+            
+            for ENDPOINT in $CDN_ENDPOINTS; do
+              echo "Purging CDN cache for $ENDPOINT..."
+              az cdn endpoint purge \
+                --resource-group ${{ env.AZURE_RESOURCE_GROUP_PROD }} \
+                --profile-name $PROFILE \
+                --name $ENDPOINT \
+                --content-paths "/*" \
+                --no-wait
+            done
+          done
+
+      - name: Summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: Production" >> $GITHUB_STEP_SUMMARY
+          echo "Storage Account: ${{ steps.deploy.outputs.storage_account }}" >> $GITHUB_STEP_SUMMARY
+          echo "Website URL: ${{ steps.deploy.outputs.website_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "CDN URL: ${{ steps.deploy.outputs.cdn_url }}" >> $GITHUB_STEP_SUMMARY
