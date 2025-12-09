@@ -380,27 +380,53 @@ class PhotoLayoutApp {
     handleTouchStart(e) {
         e.preventDefault();
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.canvas.dispatchEvent(mouseEvent);
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        // Check if touching a frame (check in reverse order for top frame)
+        // Use a larger hit area for touch (add padding for easier selection)
+        const touchPadding = 10;
+        for (let i = this.frames.length - 1; i >= 0; i--) {
+            const frame = this.frames[i];
+            if (x >= frame.x - touchPadding && x <= frame.x + frame.width + touchPadding &&
+                y >= frame.y - touchPadding && y <= frame.y + frame.height + touchPadding) {
+                this.selectedFrame = frame;
+                this.isDragging = true;
+                this.dragStartX = x - frame.x;
+                this.dragStartY = y - frame.y;
+                this.updatePropertiesPanel();
+                this.updateFramesList();
+                this.render();
+                return;
+            }
+        }
+
+        // Touched on empty space
+        this.selectedFrame = null;
+        this.updatePropertiesPanel();
+        this.updateFramesList();
+        this.render();
     }
 
     handleTouchMove(e) {
         e.preventDefault();
+        if (!this.isDragging || !this.selectedFrame) return;
+
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousemove', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.canvas.dispatchEvent(mouseEvent);
+        const rect = this.canvas.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        this.selectedFrame.x = Math.max(0, Math.min(x - this.dragStartX, this.canvas.width - this.selectedFrame.width));
+        this.selectedFrame.y = Math.max(0, Math.min(y - this.dragStartY, this.canvas.height - this.selectedFrame.height));
+
+        this.render();
     }
 
     handleTouchEnd(e) {
         e.preventDefault();
-        const mouseEvent = new MouseEvent('mouseup', {});
-        this.canvas.dispatchEvent(mouseEvent);
+        this.isDragging = false;
     }
 
     render() {
