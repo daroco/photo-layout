@@ -31,6 +31,9 @@ class PhotoLayoutApp {
         
         // Legacy scale for backwards compatibility with old saved layouts
         this.LEGACY_PIXELS_PER_INCH = 96;
+        
+        // Touch interaction settings
+        this.TOUCH_PADDING = 10; // Extra pixels around frame for easier touch selection
 
         this.init();
     }
@@ -341,6 +344,12 @@ class PhotoLayoutApp {
         this.render();
     }
 
+    // Helper method to constrain frame position within canvas bounds
+    constrainFramePosition(frame, x, y) {
+        frame.x = Math.max(0, Math.min(x - this.dragStartX, this.canvas.width - frame.width));
+        frame.y = Math.max(0, Math.min(y - this.dragStartY, this.canvas.height - frame.height));
+    }
+
     handleMouseMove(e) {
         if (!this.isDragging || !this.selectedFrame) return;
 
@@ -348,9 +357,7 @@ class PhotoLayoutApp {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        this.selectedFrame.x = Math.max(0, Math.min(x - this.dragStartX, this.canvas.width - this.selectedFrame.width));
-        this.selectedFrame.y = Math.max(0, Math.min(y - this.dragStartY, this.canvas.height - this.selectedFrame.height));
-
+        this.constrainFramePosition(this.selectedFrame, x, y);
         this.render();
     }
 
@@ -386,11 +393,10 @@ class PhotoLayoutApp {
 
         // Check if touching a frame (check in reverse order for top frame)
         // Use a larger hit area for touch (add padding for easier selection)
-        const touchPadding = 10;
         for (let i = this.frames.length - 1; i >= 0; i--) {
             const frame = this.frames[i];
-            if (x >= frame.x - touchPadding && x <= frame.x + frame.width + touchPadding &&
-                y >= frame.y - touchPadding && y <= frame.y + frame.height + touchPadding) {
+            if (x >= frame.x - this.TOUCH_PADDING && x <= frame.x + frame.width + this.TOUCH_PADDING &&
+                y >= frame.y - this.TOUCH_PADDING && y <= frame.y + frame.height + this.TOUCH_PADDING) {
                 this.selectedFrame = frame;
                 this.isDragging = true;
                 this.dragStartX = x - frame.x;
@@ -418,9 +424,7 @@ class PhotoLayoutApp {
         const x = touch.clientX - rect.left;
         const y = touch.clientY - rect.top;
 
-        this.selectedFrame.x = Math.max(0, Math.min(x - this.dragStartX, this.canvas.width - this.selectedFrame.width));
-        this.selectedFrame.y = Math.max(0, Math.min(y - this.dragStartY, this.canvas.height - this.selectedFrame.height));
-
+        this.constrainFramePosition(this.selectedFrame, x, y);
         this.render();
     }
 
