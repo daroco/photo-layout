@@ -127,9 +127,23 @@ class PhotoLayoutApp {
     }
 
     resizeCanvas(width, height) {
-        // Limit canvas size for performance
-        const maxWidth = 1200;
-        const maxHeight = 900;
+        // Make canvas responsive to viewport size
+        // On mobile, use full width. On desktop, limit to reasonable size
+        const container = this.canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const viewportWidth = window.innerWidth;
+        
+        // Determine max dimensions based on viewport
+        let maxWidth, maxHeight;
+        if (viewportWidth < 768) {
+            // Mobile: use most of the container width, accounting for padding
+            maxWidth = containerWidth - 20;
+            maxHeight = window.innerHeight * 0.5; // 50% of viewport height
+        } else {
+            // Tablet/Desktop: use larger fixed dimensions
+            maxWidth = 1200;
+            maxHeight = 900;
+        }
         
         let scale = 1;
         if (width > maxWidth || height > maxHeight) {
@@ -318,8 +332,12 @@ class PhotoLayoutApp {
 
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        
+        // Convert mouse coordinates from display space to canvas space
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
 
         // Check if clicking on a frame (check in reverse order for top frame)
         for (let i = this.frames.length - 1; i >= 0; i--) {
@@ -354,8 +372,12 @@ class PhotoLayoutApp {
         if (!this.isDragging || !this.selectedFrame) return;
 
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        
+        // Convert mouse coordinates from display space to canvas space
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
 
         this.constrainFramePosition(this.selectedFrame, x, y);
         this.render();
@@ -367,8 +389,12 @@ class PhotoLayoutApp {
 
     handleDoubleClick(e) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        
+        // Convert mouse coordinates from display space to canvas space
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
 
         for (let i = this.frames.length - 1; i >= 0; i--) {
             const frame = this.frames[i];
@@ -388,8 +414,13 @@ class PhotoLayoutApp {
         e.preventDefault();
         const touch = e.touches[0];
         const rect = this.canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
+        
+        // Convert touch coordinates from display space to canvas space
+        // The canvas might be displayed smaller than its actual pixel dimensions
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (touch.clientX - rect.left) * scaleX;
+        const y = (touch.clientY - rect.top) * scaleY;
 
         // Check if touching a frame (check in reverse order for top frame)
         // Use a larger hit area for touch (add padding for easier selection)
@@ -421,8 +452,12 @@ class PhotoLayoutApp {
 
         const touch = e.touches[0];
         const rect = this.canvas.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
+        
+        // Convert touch coordinates from display space to canvas space
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+        const x = (touch.clientX - rect.left) * scaleX;
+        const y = (touch.clientY - rect.top) * scaleY;
 
         this.constrainFramePosition(this.selectedFrame, x, y);
         this.render();
