@@ -107,6 +107,19 @@ class PhotoLayoutApp {
                 this.closeModal();
             }
         });
+        
+        // Window resize handler for responsive canvas
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            // Debounce resize events
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (this.wallImage) {
+                    this.resizeCanvas(this.wallImage.width, this.wallImage.height);
+                    this.render();
+                }
+            }, 250);
+        });
     }
 
     handleImageUpload(e) {
@@ -151,8 +164,15 @@ class PhotoLayoutApp {
             scale = Math.min(maxWidth / width, maxHeight / height);
         }
 
+        // Set canvas internal dimensions
         this.canvas.width = width * scale;
         this.canvas.height = height * scale;
+        
+        // IMPORTANT: Set canvas CSS dimensions to match internal dimensions
+        // This ensures 1:1 pixel mapping between canvas coordinates and display
+        this.canvas.style.width = (width * scale) + 'px';
+        this.canvas.style.height = (height * scale) + 'px';
+        
         this.canvasScale = scale;
     }
 
@@ -334,7 +354,8 @@ class PhotoLayoutApp {
     handleMouseDown(e) {
         const rect = this.canvas.getBoundingClientRect();
         
-        // Convert mouse coordinates from display space to canvas space
+        // Convert mouse coordinates to canvas coordinates
+        // Now with 1:1 pixel mapping, this should be accurate
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const x = (e.clientX - rect.left) * scaleX;
@@ -374,7 +395,7 @@ class PhotoLayoutApp {
 
         const rect = this.canvas.getBoundingClientRect();
         
-        // Convert mouse coordinates from display space to canvas space
+        // Convert mouse coordinates to canvas coordinates
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const x = (e.clientX - rect.left) * scaleX;
@@ -391,7 +412,7 @@ class PhotoLayoutApp {
     handleDoubleClick(e) {
         const rect = this.canvas.getBoundingClientRect();
         
-        // Convert mouse coordinates from display space to canvas space
+        // Convert mouse coordinates to canvas coordinates
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const x = (e.clientX - rect.left) * scaleX;
@@ -416,8 +437,7 @@ class PhotoLayoutApp {
         const touch = e.touches[0];
         const rect = this.canvas.getBoundingClientRect();
         
-        // Convert touch coordinates from display space to canvas space
-        // The canvas might be displayed smaller than its actual pixel dimensions
+        // Convert touch coordinates to canvas coordinates
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const x = (touch.clientX - rect.left) * scaleX;
@@ -454,7 +474,7 @@ class PhotoLayoutApp {
         const touch = e.touches[0];
         const rect = this.canvas.getBoundingClientRect();
         
-        // Convert touch coordinates from display space to canvas space
+        // Convert touch coordinates to canvas coordinates
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
         const x = (touch.clientX - rect.left) * scaleX;

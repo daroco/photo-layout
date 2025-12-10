@@ -156,7 +156,6 @@ main {
 #layoutCanvas {
     display: block;
     cursor: crosshair;
-    max-width: 100%;
     border-radius: 8px;
     touch-action: none;
     -webkit-user-select: none;
