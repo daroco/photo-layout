@@ -166,8 +166,8 @@ class PhotoLayoutApp {
             scale = Math.min(maxWidth / width, maxHeight / height);
         }
 
-        const newWidth = width * scale;
-        const newHeight = height * scale;
+        const newWidth = Math.round(width * scale);
+        const newHeight = Math.round(height * scale);
         
         // Only update if dimensions changed (avoid layout thrashing)
         if (this.canvas.width !== newWidth || this.canvas.height !== newHeight) {
