@@ -13,16 +13,17 @@ class PhotoLayoutApp {
         
         // Standard photo sizes in inches scaled for wall photos taken 8-10 feet away
         // Photos taken from that distance need smaller scale to look proportional
-        // Using 9 pixels per inch to scale frames appropriately for the photo perspective
-        this.PIXELS_PER_INCH = 9;
+        // Using 4.5 pixels per inch to scale frames appropriately for the photo perspective
+        // (Reduced by 50% from 9 px/inch for better proportions)
+        this.PIXELS_PER_INCH = 4.5;
         
         // Photo sizes - short side in inches (corresponds to button labels)
         this.photoSizes = {
-            8: 8 * this.PIXELS_PER_INCH,   // 72px
-            9: 9 * this.PIXELS_PER_INCH,   // 81px
-            10: 10 * this.PIXELS_PER_INCH, // 90px
-            12: 12 * this.PIXELS_PER_INCH, // 108px
-            15: 15 * this.PIXELS_PER_INCH  // 135px
+            8: 8 * this.PIXELS_PER_INCH,   // 36px
+            9: 9 * this.PIXELS_PER_INCH,   // 40.5px
+            10: 10 * this.PIXELS_PER_INCH, // 45px
+            12: 12 * this.PIXELS_PER_INCH, // 54px
+            15: 15 * this.PIXELS_PER_INCH  // 67.5px
         };
         
         // 3:2 aspect ratio constant for all photo sizes
@@ -526,8 +527,10 @@ class PhotoLayoutApp {
 
     saveLayout() {
         const layoutData = {
-            wallImage: this.canvas.toDataURL('image/jpeg', 0.8),
+            wallImage: this.wallImage ? this.canvas.toDataURL('image/jpeg', 0.5) : null, // Lower quality for storage
             frames: this.frames,
+            canvasWidth: this.canvas.width,
+            canvasHeight: this.canvas.height,
             timestamp: Date.now()
         };
 
@@ -565,19 +568,35 @@ class PhotoLayoutApp {
     }
 
     loadLayout(layoutData) {
-        if (!layoutData.wallImage) return;
-
-        const img = new Image();
-        img.onload = () => {
-            this.wallImage = img;
-            this.resizeCanvas(img.width, img.height);
+        // Handle legacy layouts that included the wall image
+        if (layoutData.wallImage) {
+            const img = new Image();
+            img.onload = () => {
+                this.wallImage = img;
+                this.resizeCanvas(img.width, img.height);
+                this.frames = layoutData.frames || [];
+                this.frameIdCounter = Math.max(...this.frames.map(f => f.id), 0) + 1;
+                this.render();
+                this.showCanvasSection();
+                this.updateFramesList();
+            };
+            img.src = layoutData.wallImage;
+        } else {
+            // New format: only frame data, no wall image
+            // User needs to upload their own wall photo
             this.frames = layoutData.frames || [];
             this.frameIdCounter = Math.max(...this.frames.map(f => f.id), 0) + 1;
-            this.render();
-            this.showCanvasSection();
+            
+            if (layoutData.canvasWidth && layoutData.canvasHeight) {
+                this.resizeCanvas(layoutData.canvasWidth, layoutData.canvasHeight);
+            }
+            
+            if (this.frames.length > 0) {
+                alert('Frame layout loaded! Please upload your wall photo to see the frames.');
+            }
+            
             this.updateFramesList();
-        };
-        img.src = layoutData.wallImage;
+        }
     }
 
     resetLayout() {
@@ -592,14 +611,17 @@ class PhotoLayoutApp {
     }
 
     showShareModal() {
-        if (!this.wallImage) {
-            alert('Please upload a wall image first!');
+        if (this.frames.length === 0) {
+            alert('Please add at least one frame before sharing!');
             return;
         }
 
+        // Only share frame data, not the wall image (to keep URL short)
+        // The recipient will need to upload their own wall photo
         const layoutData = {
-            wallImage: this.canvas.toDataURL('image/jpeg', 0.8),
             frames: this.frames,
+            canvasWidth: this.canvas.width,
+            canvasHeight: this.canvas.height,
             timestamp: Date.now()
         };
 
