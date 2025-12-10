@@ -35,6 +35,9 @@ class PhotoLayoutApp {
         
         // Touch interaction settings
         this.TOUCH_PADDING = 10; // Extra pixels around frame for easier touch selection
+        
+        // Resize debounce timeout reference
+        this.resizeTimeout = null;
 
         this.init();
     }
@@ -109,11 +112,10 @@ class PhotoLayoutApp {
         });
         
         // Window resize handler for responsive canvas
-        let resizeTimeout;
         window.addEventListener('resize', () => {
             // Debounce resize events
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = setTimeout(() => {
                 if (this.wallImage) {
                     this.resizeCanvas(this.wallImage.width, this.wallImage.height);
                     this.render();
@@ -164,14 +166,20 @@ class PhotoLayoutApp {
             scale = Math.min(maxWidth / width, maxHeight / height);
         }
 
-        // Set canvas internal dimensions
-        this.canvas.width = width * scale;
-        this.canvas.height = height * scale;
+        const newWidth = width * scale;
+        const newHeight = height * scale;
         
-        // IMPORTANT: Set canvas CSS dimensions to match internal dimensions
-        // This ensures 1:1 pixel mapping between canvas coordinates and display
-        this.canvas.style.width = (width * scale) + 'px';
-        this.canvas.style.height = (height * scale) + 'px';
+        // Only update if dimensions changed (avoid layout thrashing)
+        if (this.canvas.width !== newWidth || this.canvas.height !== newHeight) {
+            // Set canvas internal dimensions
+            this.canvas.width = newWidth;
+            this.canvas.height = newHeight;
+            
+            // IMPORTANT: Set canvas CSS dimensions to match internal dimensions
+            // This ensures 1:1 pixel mapping between canvas coordinates and display
+            this.canvas.style.width = newWidth + 'px';
+            this.canvas.style.height = newHeight + 'px';
+        }
         
         this.canvasScale = scale;
     }
